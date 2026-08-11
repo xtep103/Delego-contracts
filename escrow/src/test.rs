@@ -1264,5 +1264,4 @@ mod test {
         assert!(result.is_some());
         assert_eq!(result.unwrap(), new_admin);
     }
-
 }

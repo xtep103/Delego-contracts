@@ -41,22 +41,22 @@ fn test_full_lifecycle() {
 
     let record = client.get_delegation(&id);
     assert_eq!(record.status, DelegationStatus::Active);
-    assert_eq!(client.is_authorized(&id, &agent_id), true);
+    assert!(client.is_authorized(&id, &agent_id));
 
     client.pause_delegation(&id);
     let record = client.get_delegation(&id);
     assert_eq!(record.status, DelegationStatus::Paused);
-    assert_eq!(client.is_authorized(&id, &agent_id), false);
+    assert!(!client.is_authorized(&id, &agent_id));
 
     client.resume_delegation(&id);
     let record = client.get_delegation(&id);
     assert_eq!(record.status, DelegationStatus::Active);
-    assert_eq!(client.is_authorized(&id, &agent_id), true);
+    assert!(client.is_authorized(&id, &agent_id));
 
     client.revoke_delegation(&id);
     let record = client.get_delegation(&id);
     assert_eq!(record.status, DelegationStatus::Revoked);
-    assert_eq!(client.is_authorized(&id, &agent_id), false);
+    assert!(!client.is_authorized(&id, &agent_id));
 }
 
 #[test]
@@ -68,10 +68,10 @@ fn test_expiry_behavior() {
     let label = Symbol::new(&env, "Agent_Y");
 
     let id = client.create_delegation(&owner, &agent_id, &permissions_contract, &label, &100);
-    assert_eq!(client.is_authorized(&id, &agent_id), true);
+    assert!(client.is_authorized(&id, &agent_id));
 
     env.ledger().set_sequence_number(200);
-    assert_eq!(client.is_authorized(&id, &agent_id), false);
+    assert!(!client.is_authorized(&id, &agent_id));
 }
 
 #[test]
@@ -81,13 +81,8 @@ fn test_unauthorized_access() {
     let label = Symbol::new(&env, "Agent_Z");
 
     // The Soroban test env panics on missing auth, so we test via try_ returning an error
-    let result = client.try_create_delegation(
-        &owner,
-        &agent_id,
-        &permissions_contract,
-        &label,
-        &100,
-    );
+    let result =
+        client.try_create_delegation(&owner, &agent_id, &permissions_contract, &label, &100);
     assert!(result.is_err());
 }
 
@@ -180,10 +175,8 @@ fn test_created_event_emitted() {
     let found = events.iter().any(|(_, topics, _)| {
         let t: soroban_sdk::Vec<soroban_sdk::Val> = topics;
         t.len() >= 2
-            && Symbol::try_from_val(&env, &t.get(0).unwrap()).ok()
-                == Some(symbol_short!("deleg"))
-            && Symbol::try_from_val(&env, &t.get(1).unwrap()).ok()
-                == Some(symbol_short!("created"))
+            && Symbol::try_from_val(&env, &t.get(0).unwrap()).ok() == Some(symbol_short!("deleg"))
+            && Symbol::try_from_val(&env, &t.get(1).unwrap()).ok() == Some(symbol_short!("created"))
     });
     assert!(found, "DelegationCreated event not emitted; id={id}");
 }
@@ -201,10 +194,8 @@ fn test_paused_event_emitted() {
     let found = events.iter().any(|(_, topics, _)| {
         let t: soroban_sdk::Vec<soroban_sdk::Val> = topics;
         t.len() >= 2
-            && Symbol::try_from_val(&env, &t.get(0).unwrap()).ok()
-                == Some(symbol_short!("deleg"))
-            && Symbol::try_from_val(&env, &t.get(1).unwrap()).ok()
-                == Some(symbol_short!("paused"))
+            && Symbol::try_from_val(&env, &t.get(0).unwrap()).ok() == Some(symbol_short!("deleg"))
+            && Symbol::try_from_val(&env, &t.get(1).unwrap()).ok() == Some(symbol_short!("paused"))
     });
     assert!(found, "DelegationPaused event not emitted");
 }
@@ -223,10 +214,8 @@ fn test_resumed_event_emitted() {
     let found = events.iter().any(|(_, topics, _)| {
         let t: soroban_sdk::Vec<soroban_sdk::Val> = topics;
         t.len() >= 2
-            && Symbol::try_from_val(&env, &t.get(0).unwrap()).ok()
-                == Some(symbol_short!("deleg"))
-            && Symbol::try_from_val(&env, &t.get(1).unwrap()).ok()
-                == Some(symbol_short!("resumed"))
+            && Symbol::try_from_val(&env, &t.get(0).unwrap()).ok() == Some(symbol_short!("deleg"))
+            && Symbol::try_from_val(&env, &t.get(1).unwrap()).ok() == Some(symbol_short!("resumed"))
     });
     assert!(found, "DelegationResumed event not emitted");
 }
@@ -302,10 +291,20 @@ fn test_get_expired_delegations_returns_correct_list() {
     let expiring_label = Symbol::new(&env, "Expiring");
     let active_label = Symbol::new(&env, "Active");
 
-    let expiring_id =
-        client.create_delegation(&owner, &agent_id, &permissions_contract, &expiring_label, &100);
-    let active_id =
-        client.create_delegation(&owner, &agent_id, &permissions_contract, &active_label, &1000);
+    let expiring_id = client.create_delegation(
+        &owner,
+        &agent_id,
+        &permissions_contract,
+        &expiring_label,
+        &100,
+    );
+    let active_id = client.create_delegation(
+        &owner,
+        &agent_id,
+        &permissions_contract,
+        &active_label,
+        &1000,
+    );
 
     env.ledger().set_sequence_number(300);
 
@@ -386,7 +385,7 @@ fn test_version_history_is_stored() {
     client.resume_delegation(&id);
 
     let history = client.get_delegation_history(&id);
-    assert!(history.len() >= 1);
+    assert!(!history.is_empty());
 
     let first_snapshot = history.get(0).unwrap();
     assert_eq!(first_snapshot.version, 1);

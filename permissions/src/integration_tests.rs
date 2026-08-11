@@ -21,7 +21,11 @@ fn test_keypair(env: &Env, seed: u8) -> (SigningKey, BytesN<32>) {
 /// Sign a `RelayedSpendMessage` with the given key, returning the raw
 /// 64-byte ed25519 signature over the message's canonical XDR encoding —
 /// the exact bytes `execute_spend_via_relayer` re-derives and verifies.
-fn sign_relayed_spend(env: &Env, signing_key: &SigningKey, message: RelayedSpendMessage) -> BytesN<64> {
+fn sign_relayed_spend(
+    env: &Env,
+    signing_key: &SigningKey,
+    message: RelayedSpendMessage,
+) -> BytesN<64> {
     let message_bytes = message.to_xdr(env);
     let len = message_bytes.len() as usize;
     let mut buf = [0u8; 512];
@@ -286,27 +290,23 @@ fn test_permission_events() {
     let mut granted_event_found = false;
     for event in events.iter() {
         let (contract, topics, value) = event;
-        if contract == t.permissions_contract_id {
-            if topics.len() == 2 {
-                let topic0: soroban_sdk::Symbol =
-                    topics.get(0).unwrap().try_into_val(&t.env).unwrap();
-                let topic1: soroban_sdk::Symbol =
-                    topics.get(1).unwrap().try_into_val(&t.env).unwrap();
-                if topic0 == soroban_sdk::symbol_short!("perm")
-                    && topic1 == soroban_sdk::symbol_short!("granted")
-                {
-                    let evt: crate::PermissionGrantedEvent = value.try_into_val(&t.env).unwrap();
-                    assert_eq!(evt.owner, t.buyer);
-                    assert_eq!(evt.delegate, t.agent);
-                    assert_eq!(evt.per_tx_limit, limit_per_tx);
-                    assert_eq!(evt.total_limit, limit_total);
-                    assert_eq!(
-                        evt.expires_at_ledger,
-                        t.env.ledger().sequence() + ttl_ledgers
-                    );
-                    assert_eq!(evt.merchant_count, 1);
-                    granted_event_found = true;
-                }
+        if contract == t.permissions_contract_id && topics.len() == 2 {
+            let topic0: soroban_sdk::Symbol = topics.get(0).unwrap().try_into_val(&t.env).unwrap();
+            let topic1: soroban_sdk::Symbol = topics.get(1).unwrap().try_into_val(&t.env).unwrap();
+            if topic0 == soroban_sdk::symbol_short!("perm")
+                && topic1 == soroban_sdk::symbol_short!("granted")
+            {
+                let evt: crate::PermissionGrantedEvent = value.try_into_val(&t.env).unwrap();
+                assert_eq!(evt.owner, t.buyer);
+                assert_eq!(evt.delegate, t.agent);
+                assert_eq!(evt.per_tx_limit, limit_per_tx);
+                assert_eq!(evt.total_limit, limit_total);
+                assert_eq!(
+                    evt.expires_at_ledger,
+                    t.env.ledger().sequence() + ttl_ledgers
+                );
+                assert_eq!(evt.merchant_count, 1);
+                granted_event_found = true;
             }
         }
     }
@@ -317,23 +317,19 @@ fn test_permission_events() {
     let mut spent_event_found = false;
     for event in events.iter() {
         let (contract, topics, value) = event;
-        if contract == t.permissions_contract_id {
-            if topics.len() == 2 {
-                let topic0: soroban_sdk::Symbol =
-                    topics.get(0).unwrap().try_into_val(&t.env).unwrap();
-                let topic1: soroban_sdk::Symbol =
-                    topics.get(1).unwrap().try_into_val(&t.env).unwrap();
-                if topic0 == soroban_sdk::symbol_short!("perm")
-                    && topic1 == soroban_sdk::symbol_short!("spent")
-                {
-                    let evt: crate::PermissionSpendEvent = value.try_into_val(&t.env).unwrap();
-                    assert_eq!(evt.owner, t.buyer);
-                    assert_eq!(evt.delegate, t.agent);
-                    assert_eq!(evt.amount, 40);
-                    assert_eq!(evt.merchant, t.seller);
-                    assert_eq!(evt.remaining, 60);
-                    spent_event_found = true;
-                }
+        if contract == t.permissions_contract_id && topics.len() == 2 {
+            let topic0: soroban_sdk::Symbol = topics.get(0).unwrap().try_into_val(&t.env).unwrap();
+            let topic1: soroban_sdk::Symbol = topics.get(1).unwrap().try_into_val(&t.env).unwrap();
+            if topic0 == soroban_sdk::symbol_short!("perm")
+                && topic1 == soroban_sdk::symbol_short!("spent")
+            {
+                let evt: crate::PermissionSpendEvent = value.try_into_val(&t.env).unwrap();
+                assert_eq!(evt.owner, t.buyer);
+                assert_eq!(evt.delegate, t.agent);
+                assert_eq!(evt.amount, 40);
+                assert_eq!(evt.merchant, t.seller);
+                assert_eq!(evt.remaining, 60);
+                spent_event_found = true;
             }
         }
     }
@@ -344,20 +340,16 @@ fn test_permission_events() {
     let mut revoked_event_found = false;
     for event in events.iter() {
         let (contract, topics, value) = event;
-        if contract == t.permissions_contract_id {
-            if topics.len() == 2 {
-                let topic0: soroban_sdk::Symbol =
-                    topics.get(0).unwrap().try_into_val(&t.env).unwrap();
-                let topic1: soroban_sdk::Symbol =
-                    topics.get(1).unwrap().try_into_val(&t.env).unwrap();
-                if topic0 == soroban_sdk::symbol_short!("perm")
-                    && topic1 == soroban_sdk::symbol_short!("revoked")
-                {
-                    let evt: crate::PermissionRevokedEvent = value.try_into_val(&t.env).unwrap();
-                    assert_eq!(evt.owner, t.buyer);
-                    assert_eq!(evt.delegate, t.agent);
-                    revoked_event_found = true;
-                }
+        if contract == t.permissions_contract_id && topics.len() == 2 {
+            let topic0: soroban_sdk::Symbol = topics.get(0).unwrap().try_into_val(&t.env).unwrap();
+            let topic1: soroban_sdk::Symbol = topics.get(1).unwrap().try_into_val(&t.env).unwrap();
+            if topic0 == soroban_sdk::symbol_short!("perm")
+                && topic1 == soroban_sdk::symbol_short!("revoked")
+            {
+                let evt: crate::PermissionRevokedEvent = value.try_into_val(&t.env).unwrap();
+                assert_eq!(evt.owner, t.buyer);
+                assert_eq!(evt.delegate, t.agent);
+                revoked_event_found = true;
             }
         }
     }
@@ -439,7 +431,14 @@ fn test_execute_spend_via_relayer_succeeds() {
     let ttl_ledgers = 3600u32;
     let mut merchants = Vec::<Address>::new(&t.env);
     merchants.push_back(t.seller.clone());
-    client.grant(&t.buyer, &t.agent, &limit_total, &limit_per_tx, &merchants, &ttl_ledgers);
+    client.grant(
+        &t.buyer,
+        &t.agent,
+        &limit_total,
+        &limit_per_tx,
+        &merchants,
+        &ttl_ledgers,
+    );
 
     let (signing_key, public_key) = test_keypair(&t.env, 1);
     client.set_relayer_key(&t.agent, &public_key);
@@ -495,13 +494,27 @@ fn test_execute_spend_via_relayer_rejects_replayed_nonce() {
     let signature = sign_relayed_spend(&t.env, &signing_key, message);
 
     client.execute_spend_via_relayer(
-        &relayer, &t.buyer, &t.agent, &20, &t.seller, &0u64, &expiration_ledger, &signature,
+        &relayer,
+        &t.buyer,
+        &t.agent,
+        &20,
+        &t.seller,
+        &0u64,
+        &expiration_ledger,
+        &signature,
     );
 
     // Replaying the exact same signed message (nonce 0 again) is rejected.
     assert_eq!(
         client.try_execute_spend_via_relayer(
-            &relayer, &t.buyer, &t.agent, &20, &t.seller, &0u64, &expiration_ledger, &signature,
+            &relayer,
+            &t.buyer,
+            &t.agent,
+            &20,
+            &t.seller,
+            &0u64,
+            &expiration_ledger,
+            &signature,
         ),
         Err(Ok(PermissionError::InvalidNonce))
     );
@@ -535,7 +548,14 @@ fn test_execute_spend_via_relayer_rejects_invalid_signature() {
     let signature = sign_relayed_spend(&t.env, &wrong_key, message);
 
     client.execute_spend_via_relayer(
-        &relayer, &t.buyer, &t.agent, &20, &t.seller, &0u64, &expiration_ledger, &signature,
+        &relayer,
+        &t.buyer,
+        &t.agent,
+        &20,
+        &t.seller,
+        &0u64,
+        &expiration_ledger,
+        &signature,
     );
 }
 
@@ -566,7 +586,14 @@ fn test_execute_spend_via_relayer_rejects_expired_signature() {
 
     assert_eq!(
         client.try_execute_spend_via_relayer(
-            &relayer, &t.buyer, &t.agent, &20, &t.seller, &0u64, &expiration_ledger, &signature,
+            &relayer,
+            &t.buyer,
+            &t.agent,
+            &20,
+            &t.seller,
+            &0u64,
+            &expiration_ledger,
+            &signature,
         ),
         Err(Ok(PermissionError::SignatureExpired))
     );
@@ -596,7 +623,14 @@ fn test_execute_spend_via_relayer_without_registered_key_fails() {
 
     assert_eq!(
         client.try_execute_spend_via_relayer(
-            &relayer, &t.buyer, &t.agent, &20, &t.seller, &0u64, &expiration_ledger, &signature,
+            &relayer,
+            &t.buyer,
+            &t.agent,
+            &20,
+            &t.seller,
+            &0u64,
+            &expiration_ledger,
+            &signature,
         ),
         Err(Ok(PermissionError::RelayerKeyNotSet))
     );
@@ -628,7 +662,14 @@ fn test_execute_spend_via_relayer_enforces_per_tx_limit() {
 
     assert_eq!(
         client.try_execute_spend_via_relayer(
-            &relayer, &t.buyer, &t.agent, &999, &t.seller, &0u64, &expiration_ledger, &signature,
+            &relayer,
+            &t.buyer,
+            &t.agent,
+            &999,
+            &t.seller,
+            &0u64,
+            &expiration_ledger,
+            &signature,
         ),
         Err(Ok(PermissionError::ExceedsPerTxLimit))
     );
@@ -654,12 +695,17 @@ fn test_usage_stats_update_after_each_spend() {
     assert_eq!(after_first.first_spend_ledger, t.env.ledger().sequence());
     assert_eq!(after_first.last_spend_ledger, t.env.ledger().sequence());
 
-    t.env.ledger().set_sequence_number(t.env.ledger().sequence() + 5);
+    t.env
+        .ledger()
+        .set_sequence_number(t.env.ledger().sequence() + 5);
     client.execute_spend(&t.buyer, &t.agent, &200, &t.seller);
     let after_second = client.get_usage_stats(&t.buyer, &t.agent);
     assert_eq!(after_second.total_spends, 2);
     assert_eq!(after_second.total_spent, 300);
-    assert_eq!(after_second.first_spend_ledger, after_first.first_spend_ledger);
+    assert_eq!(
+        after_second.first_spend_ledger,
+        after_first.first_spend_ledger
+    );
     assert_eq!(after_second.last_spend_ledger, t.env.ledger().sequence());
 }
 
@@ -688,13 +734,22 @@ fn test_usage_stats_tracks_largest_spend() {
     client.grant(&t.buyer, &t.agent, &1000, &500, &merchants, &3600u32);
 
     client.execute_spend(&t.buyer, &t.agent, &150, &t.seller);
-    assert_eq!(client.get_usage_stats(&t.buyer, &t.agent).largest_spend, 150);
+    assert_eq!(
+        client.get_usage_stats(&t.buyer, &t.agent).largest_spend,
+        150
+    );
 
     client.execute_spend(&t.buyer, &t.agent, &75, &t.seller);
-    assert_eq!(client.get_usage_stats(&t.buyer, &t.agent).largest_spend, 150);
+    assert_eq!(
+        client.get_usage_stats(&t.buyer, &t.agent).largest_spend,
+        150
+    );
 
     client.execute_spend(&t.buyer, &t.agent, &400, &t.seller);
-    assert_eq!(client.get_usage_stats(&t.buyer, &t.agent).largest_spend, 400);
+    assert_eq!(
+        client.get_usage_stats(&t.buyer, &t.agent).largest_spend,
+        400
+    );
 }
 
 #[test]
@@ -735,7 +790,14 @@ fn test_usage_stats_include_relayed_spends() {
     };
     let signature = sign_relayed_spend(&t.env, &signing_key, message);
     client.execute_spend_via_relayer(
-        &relayer, &t.buyer, &t.agent, &250, &t.seller, &0u64, &expiration_ledger, &signature,
+        &relayer,
+        &t.buyer,
+        &t.agent,
+        &250,
+        &t.seller,
+        &0u64,
+        &expiration_ledger,
+        &signature,
     );
 
     let stats = client.get_usage_stats(&t.buyer, &t.agent);

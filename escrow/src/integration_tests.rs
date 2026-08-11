@@ -1,11 +1,12 @@
 #![cfg(test)]
 
 use crate::{
-    BatchDepositParams, BatchReleaseParams, BatchRefundParams, EscrowContract,
+    BatchDepositParams, BatchRefundParams, BatchReleaseParams, EscrowContract,
     EscrowContractClient, EscrowError, EscrowStatus, EscrowTerminalState,
 };
 use soroban_sdk::{
-    symbol_short, testutils::{Address as _, Ledger, MockAuth, MockAuthInvoke},
+    symbol_short,
+    testutils::{Address as _, Ledger, MockAuth, MockAuthInvoke},
     Address, BytesN, Env, IntoVal, Vec,
 };
 
@@ -1870,8 +1871,14 @@ fn test_batch_refund_three_orders_all_succeed() {
     assert_eq!(results.len(), 2);
     assert!(results.iter().all(|r| r.fully_refunded));
 
-    assert_eq!(escrow_client.get_escrow(&id_a).status, EscrowStatus::Refunded);
-    assert_eq!(escrow_client.get_escrow(&id_b).status, EscrowStatus::Refunded);
+    assert_eq!(
+        escrow_client.get_escrow(&id_a).status,
+        EscrowStatus::Refunded
+    );
+    assert_eq!(
+        escrow_client.get_escrow(&id_b).status,
+        EscrowStatus::Refunded
+    );
 }
 
 fn deposit_escrow_with_id(t: &TestEnv, amount: i128, timeout_ledgers: u32, id_seed: u8) -> u64 {

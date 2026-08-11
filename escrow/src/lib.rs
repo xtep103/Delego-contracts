@@ -761,8 +761,7 @@ impl EscrowContract {
             .instance()
             .get(&DataKey::Admin)
             .ok_or(EscrowError::NotFound)?;
-        let pending_admin: Option<Address> =
-            env.storage().instance().get(&DataKey::PendingAdmin);
+        let pending_admin: Option<Address> = env.storage().instance().get(&DataKey::PendingAdmin);
 
         Ok(AdminView {
             admin,
@@ -1517,7 +1516,15 @@ impl EscrowContract {
 
         buyer.require_auth();
         Self::create_internal(
-            env, buyer, seller, token, amount, order_id, timeout_ledgers, order_hash, schema,
+            env,
+            buyer,
+            seller,
+            token,
+            amount,
+            order_id,
+            timeout_ledgers,
+            order_hash,
+            schema,
         )
     }
 
@@ -1734,7 +1741,15 @@ impl EscrowContract {
 
         buyer.require_auth();
         Self::deposit_internal(
-            env, buyer, seller, token, amount, order_id, timeout_ledgers, order_hash, schema,
+            env,
+            buyer,
+            seller,
+            token,
+            amount,
+            order_id,
+            timeout_ledgers,
+            order_hash,
+            schema,
         )
     }
 
@@ -2530,10 +2545,7 @@ impl EscrowContract {
     ///
     /// # Errors
     /// Returns [`EscrowError::NotFound`] when no escrow exists for `escrow_id`.
-    pub fn get_escrow_summary(
-        env: Env,
-        escrow_id: u64,
-    ) -> Result<EscrowSummary, EscrowError> {
+    pub fn get_escrow_summary(env: Env, escrow_id: u64) -> Result<EscrowSummary, EscrowError> {
         let key = DataKey::Escrow(escrow_id);
         let record: EscrowRecord = env
             .storage()
@@ -3212,7 +3224,6 @@ impl EscrowContract {
     pub fn get_pending_admin(env: Env) -> Option<Address> {
         env.storage().instance().get(&DataKey::PendingAdmin)
     }
-
 }
 
 #[cfg(test)]
