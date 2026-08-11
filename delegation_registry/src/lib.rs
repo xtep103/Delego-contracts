@@ -1,6 +1,7 @@
 #![no_std]
 use soroban_sdk::{
-    contract, contracterror, contractimpl, contracttype, symbol_short, Address, BytesN, Env, Symbol, Vec,
+    contract, contracterror, contractimpl, contracttype, symbol_short, Address, BytesN, Env,
+    Symbol, Vec,
 };
 
 #[contracttype]
@@ -210,10 +211,7 @@ impl DelegationRegistry {
         id
     }
 
-    pub fn pause_delegation(
-        env: Env,
-        delegation_id: u64,
-    ) -> Result<bool, DelegationError> {
+    pub fn pause_delegation(env: Env, delegation_id: u64) -> Result<bool, DelegationError> {
         let mut record: DelegationRecord = env
             .storage()
             .persistent()
@@ -248,10 +246,7 @@ impl DelegationRegistry {
         Ok(true)
     }
 
-    pub fn resume_delegation(
-        env: Env,
-        delegation_id: u64,
-    ) -> Result<bool, DelegationError> {
+    pub fn resume_delegation(env: Env, delegation_id: u64) -> Result<bool, DelegationError> {
         let mut record: DelegationRecord = env
             .storage()
             .persistent()
@@ -307,10 +302,7 @@ impl DelegationRegistry {
         Ok(true)
     }
 
-    pub fn revoke_delegation(
-        env: Env,
-        delegation_id: u64,
-    ) -> Result<bool, DelegationError> {
+    pub fn revoke_delegation(env: Env, delegation_id: u64) -> Result<bool, DelegationError> {
         let mut record: DelegationRecord = env
             .storage()
             .persistent()
@@ -400,7 +392,10 @@ impl DelegationRegistry {
         Ok(true)
     }
 
-    pub fn get_delegation(env: Env, delegation_id: u64) -> Result<DelegationRecord, DelegationError> {
+    pub fn get_delegation(
+        env: Env,
+        delegation_id: u64,
+    ) -> Result<DelegationRecord, DelegationError> {
         env.storage()
             .persistent()
             .get(&DataKey::Delegation(delegation_id))
@@ -482,8 +477,7 @@ impl DelegationRegistry {
 
         for id in delegation_ids.iter() {
             let key = DataKey::Delegation(id);
-            if let Some(mut record) = env.storage().persistent().get::<_, DelegationRecord>(&key)
-            {
+            if let Some(mut record) = env.storage().persistent().get::<_, DelegationRecord>(&key) {
                 let already_terminal = record.status == DelegationStatus::Expired
                     || record.status == DelegationStatus::Revoked;
                 if !already_terminal && current_ledger >= record.expires_at_ledger {

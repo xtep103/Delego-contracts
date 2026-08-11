@@ -1,4 +1,5 @@
 #[cfg(test)]
+#[allow(clippy::module_inception)]
 mod test {
     use crate::{PermissionError, PermissionsContract, PermissionsContractClient};
     use soroban_sdk::{
@@ -766,7 +767,7 @@ mod test {
 
         // Advance timestamp past 24h timelock
         env.ledger().with_mut(|li| {
-            li.timestamp = li.timestamp + 86401;
+            li.timestamp += 86401;
         });
 
         // Execute the decrease
@@ -816,7 +817,7 @@ mod test {
         // Decrease allowance by 100 (new limit: 400, spent: 50)
         client.decrease_allowance(&owner, &delegate, &100);
         env.ledger().with_mut(|li| {
-            li.timestamp = li.timestamp + 86401;
+            li.timestamp += 86401;
         });
         client.execute_decrease_allowance(&owner, &delegate);
 
@@ -883,7 +884,7 @@ mod test {
 
         client.decrease_allowance(&owner, &delegate, &200);
         env.ledger().with_mut(|li| {
-            li.timestamp = li.timestamp + 86401;
+            li.timestamp += 86401;
         });
         client.execute_decrease_allowance(&owner, &delegate);
 
@@ -1055,7 +1056,10 @@ mod test {
 
         // Permission key is intact and returns the correct type.
         let perm = client.get_permission(&owner, &delegate);
-        assert_eq!(perm.limit_total, 1000, "Permission key must survive Metadata write");
+        assert_eq!(
+            perm.limit_total, 1000,
+            "Permission key must survive Metadata write"
+        );
 
         // Metadata key is intact and returns the correct hash.
         let m = client.get_metadata(&owner, &delegate);
@@ -1095,7 +1099,10 @@ mod test {
 
         // And the a→b slot must still hold the right data.
         let receipt = client.get_receipt(&a, &b);
-        assert_eq!(receipt.limit, 500, "a→b grant must be unaffected by b→a absence");
+        assert_eq!(
+            receipt.limit, 500,
+            "a→b grant must be unaffected by b→a absence"
+        );
     }
 
     // ── Issue #182: Self-delegation guard ────────────────────────────────────
@@ -1175,7 +1182,10 @@ mod test {
         // Confirm self-delegation is still blocked.
         let owner = Address::generate(&env);
         let grant_result = client.try_grant(&owner, &owner, &1000, &100, &merchants, &10000);
-        assert_eq!(grant_result, Err(Ok(crate::PermissionError::SelfDelegationNotAllowed)));
+        assert_eq!(
+            grant_result,
+            Err(Ok(crate::PermissionError::SelfDelegationNotAllowed))
+        );
     }
 
     // ── Issue #180: Permission Receipt Getter ────────────────────────────────
@@ -1311,18 +1321,13 @@ mod test {
         let contract_id = env.register(PermissionsContract, ());
         let client = PermissionsContractClient::new(&env, &contract_id);
 
-        client.grant_with_metadata(
-            &owner,
-            &delegate,
-            &1000,
-            &100,
-            &merchants,
-            &10000,
-            &None,
-        );
+        client.grant_with_metadata(&owner, &delegate, &1000, &100, &merchants, &10000, &None);
 
         let stored = client.get_metadata(&owner, &delegate);
-        assert!(stored.is_none(), "No metadata should be stored when None is passed");
+        assert!(
+            stored.is_none(),
+            "No metadata should be stored when None is passed"
+        );
     }
 
     #[test]
@@ -1348,7 +1353,15 @@ mod test {
         };
 
         // First grant: with metadata.
-        client.grant_with_metadata(&owner, &delegate, &1000, &100, &merchants, &10000, &Some(meta));
+        client.grant_with_metadata(
+            &owner,
+            &delegate,
+            &1000,
+            &100,
+            &merchants,
+            &10000,
+            &Some(meta),
+        );
         assert!(client.get_metadata(&owner, &delegate).is_some());
 
         // Second grant: without metadata — stale entry must be removed.
@@ -1520,7 +1533,10 @@ mod test {
 
         let preview = client.preview_spend(&owner, &delegate, &100, &merchant);
         assert!(!preview.allowed);
-        assert_eq!(preview.reason, soroban_sdk::Symbol::new(&env, "unauthorized"));
+        assert_eq!(
+            preview.reason,
+            soroban_sdk::Symbol::new(&env, "unauthorized")
+        );
     }
 
     /// Failure path: amount exceeds per-transaction limit.
@@ -1541,7 +1557,10 @@ mod test {
         // Ask for more than the per-tx ceiling.
         let preview = client.preview_spend(&owner, &delegate, &101, &merchant);
         assert!(!preview.allowed);
-        assert_eq!(preview.reason, soroban_sdk::Symbol::new(&env, "per_tx_limit"));
+        assert_eq!(
+            preview.reason,
+            soroban_sdk::Symbol::new(&env, "per_tx_limit")
+        );
         // remaining_after must equal current remaining (no deduction).
         assert_eq!(preview.remaining_after, 1000);
     }
@@ -1566,7 +1585,10 @@ mod test {
         // Now preview a spend of 100 which exceeds the 50 remaining.
         let preview = client.preview_spend(&owner, &delegate, &100, &merchant);
         assert!(!preview.allowed);
-        assert_eq!(preview.reason, soroban_sdk::Symbol::new(&env, "total_limit"));
+        assert_eq!(
+            preview.reason,
+            soroban_sdk::Symbol::new(&env, "total_limit")
+        );
         assert_eq!(preview.remaining_after, 50);
     }
 
@@ -1589,7 +1611,10 @@ mod test {
 
         let preview = client.preview_spend(&owner, &delegate, &100, &other_merchant);
         assert!(!preview.allowed);
-        assert_eq!(preview.reason, soroban_sdk::Symbol::new(&env, "bad_merchant"));
+        assert_eq!(
+            preview.reason,
+            soroban_sdk::Symbol::new(&env, "bad_merchant")
+        );
     }
 
     /// Preview result matches actual execute outcome: preview says NOT allowed
@@ -1612,14 +1637,17 @@ mod test {
         // Preview a spend of 60 — exceeds per-tx.
         let preview = client.preview_spend(&owner, &delegate, &60, &merchant);
         assert!(!preview.allowed);
-        assert_eq!(preview.reason, soroban_sdk::Symbol::new(&env, "per_tx_limit"));
+        assert_eq!(
+            preview.reason,
+            soroban_sdk::Symbol::new(&env, "per_tx_limit")
+        );
 
         // The real execute must return the same error.
         let res = client.try_execute_spend(&owner, &delegate, &60, &merchant);
         assert_eq!(res, Err(Ok(crate::PermissionError::ExceedsPerTxLimit)));
     }
 
-     #[test]
+    #[test]
     fn test_merchant_list_exceeds_max_rejected() {
         let env = Env::default();
         env.mock_all_auths();
@@ -1695,7 +1723,14 @@ mod test {
 
         let merchants = Vec::<Address>::new(&env);
         // Set up a parent permission first.
-        client.grant(&parent_owner, &parent_delegate, &10_000, &1000, &merchants, &10000);
+        client.grant(
+            &parent_owner,
+            &parent_delegate,
+            &10_000,
+            &1000,
+            &merchants,
+            &10000,
+        );
 
         let mut child_merchants = Vec::<Address>::new(&env);
         for _ in 0..crate::MAX_MERCHANTS_PER_PERMISSION + 1 {
@@ -1764,7 +1799,8 @@ mod test {
             }
             let t0: soroban_sdk::Symbol = topics.get(0).unwrap().try_into_val(&env).unwrap();
             let t1: soroban_sdk::Symbol = topics.get(1).unwrap().try_into_val(&env).unwrap();
-            if t0 == soroban_sdk::symbol_short!("perm") && t1 == soroban_sdk::symbol_short!("merc_list")
+            if t0 == soroban_sdk::symbol_short!("perm")
+                && t1 == soroban_sdk::symbol_short!("merc_list")
             {
                 let evt: crate::MerchantWhitelistChangedEvent = value.try_into_val(&env).unwrap();
                 assert_eq!(evt.owner, owner);
@@ -1776,7 +1812,7 @@ mod test {
         assert!(found, "MerchantWhitelistChangedEvent not found in events");
     }
 
-     #[test]
+    #[test]
     fn test_merchant_list_event_not_emitted() {
         let env = Env::default();
         env.mock_all_auths();
@@ -1946,7 +1982,10 @@ mod test {
         assert_eq!(res, Err(Ok(PermissionError::InsufficientSignatures)));
 
         let record = client.get_multi_permission(&owner_a, &delegate);
-        assert_eq!(record.spent, 0, "spend must not be recorded when threshold is not met");
+        assert_eq!(
+            record.spent, 0,
+            "spend must not be recorded when threshold is not met"
+        );
     }
 
     #[test]
@@ -1965,7 +2004,10 @@ mod test {
         client.execute_spend(&owner, &delegate, &50, &merchant);
 
         let record = client.get_permission(&owner, &delegate);
-        assert_eq!(record.spent, 50, "existing single-owner permission flow must still work");
+        assert_eq!(
+            record.spent, 50,
+            "existing single-owner permission flow must still work"
+        );
     }
 
     // ── Issue #328: Permission Metadata Schema Validation Tests ──────────────
@@ -1993,7 +2035,13 @@ mod test {
         };
 
         client.grant_with_metadata(
-            &owner, &delegate, &1000, &100, &merchants, &10000, &Some(metadata),
+            &owner,
+            &delegate,
+            &1000,
+            &100,
+            &merchants,
+            &10000,
+            &Some(metadata),
         );
 
         let stored = client.get_metadata(&owner, &delegate);
@@ -2019,7 +2067,13 @@ mod test {
         };
 
         let res = client.try_grant_with_metadata(
-            &owner, &delegate, &1000, &100, &merchants, &10000, &Some(metadata),
+            &owner,
+            &delegate,
+            &1000,
+            &100,
+            &merchants,
+            &10000,
+            &Some(metadata),
         );
         assert_eq!(res, Err(Ok(PermissionError::UnknownSchema)));
     }
